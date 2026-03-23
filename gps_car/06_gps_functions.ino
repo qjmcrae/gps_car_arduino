@@ -38,7 +38,7 @@ void get_gps_data(float target_lat, float target_lon) {
   // Knowing that Salt Lake is 6-7 hours behind the standard GPS time (depending on DST) ...
   // Also, assuming that DST is between between Feb 28 and Nov 1 (not accurate, but close enough)
   byte UT_hour_offset = 7;
-  if (gps_month > 2 && gps_month < 11) {
+  if (gps_month > 2 && gps_month < 11 && gps_day > 7) {
     UT_hour_offset = 6;  // when on daylight savings time...
   }
   if (gps_hour < UT_hour_offset) {
@@ -55,7 +55,7 @@ void get_gps_data(float target_lat, float target_lon) {
 
   sprintf(gps_time, "%2d:%02d:%02d", gps_hour, gps_minute, gps_second);
   sprintf(gps_date, "%0d/%0d/%0d", gps_month, gps_day, gps_year);
-  sprintf(gps_speed, "%2d", round(gps.speed.mph()));
+  gps_speed = round(gps.speed.mph());
 }  //End of get_gps_data
 
 

@@ -118,19 +118,19 @@ void Main_Screen() {  // Main Screen
   }
 
   lcd.setCursor(0, 1);
-  lcd.print(F("LIDAR:    "));
+  lcd.print(F("LIDAR:     "));
   lcd.setCursor(6, 1);
-  lcd.print(dist_lidar);
+  lcd.print(constrain(dist_lidar,0,99),1);
 
   // clear heading and gps data, so i don't have to clear the whole line every time
   lcd.setCursor(0, 2);
   lcd.print(F("Hdg "));
   byte i = 4;
-  if (compass_heading < 0) i = i - 1;
+  if (car_heading < 0) i = i - 1;
   lcd.setCursor(4, 2);
   lcd.print(F("    "));
   lcd.setCursor(i, 2);
-  lcd.print(compass_heading);
+  lcd.print(car_heading);
   lcd.setCursor(8, 2);
   lcd.print(F("GPS "));
   i = 12;
@@ -226,7 +226,7 @@ void Environment_Screen() {  // Environmental Information
   lcd.setCursor(0, 3);
   lcd.print(F("Heading:            "));
   lcd.setCursor(8, 3);
-  lcd.print(compass_heading);
+  lcd.print(car_heading);
 }
 
 void Battery_Screen() {  // Battery Information
@@ -238,14 +238,14 @@ void Battery_Screen() {  // Battery Information
   calc_batt_voltage();  // measure battery voltage
   lcd.setCursor(0, 0);
   lcd.print(F("   Battery Status   "));
-  lcd.setCursor(0, 1);
-  lcd.print(F("Cell 1: "));
-  lcd.print(volts_cell_1);
-  lcd.print(F(" V"));
-  lcd.setCursor(0, 2);
-  lcd.print(F("Cell 2: "));
-  lcd.print(volts_cell_2);
-  lcd.print(F(" V"));
+  // lcd.setCursor(0, 1);
+  // lcd.print(F("Cell 1: "));
+  // lcd.print(volts_cell_1);
+  // lcd.print(F(" V"));
+  // lcd.setCursor(0, 2);
+  // lcd.print(F("Cell 2: "));
+  // lcd.print(volts_cell_2);
+  // lcd.print(F(" V"));
   lcd.setCursor(0, 3);
   lcd.print(F("Total : "));
   lcd.print(volts_total);

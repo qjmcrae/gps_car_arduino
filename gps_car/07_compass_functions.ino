@@ -7,6 +7,7 @@
 // ************************   GET_COMPASS_DATA   ************************//
 
 void get_compass_data(float target_lat, float target_lon) {
+  int compass_heading;
   if (hmc_flag) {
     sensors_event_t event;
     compass_HMC.getEvent(&event);
@@ -24,19 +25,25 @@ void get_compass_data(float target_lat, float target_lon) {
   // Salt Lake is 11°0', or 11.0°
 
   float declinationAngle = 11.0;
-  compass_heading = compass_heading + declinationAngle;
+  compass_heading += declinationAngle;
+
+  car_heading = compass_heading;
+  // Once going above a certain speed, switch to GPS angle - hopefully overcomes crappy compass reading
+  // qj - not sure yet...  Seems like a good idea, but first pass had weird effects, and haven't applied yet
+  // if (gps.speed.mph() > 4 && dist_to_target > 5) car_heading = gps.course.deg();
 
   // Check for wrap due to addition of declination or subtraction of offset.
-  if (abs(compass_heading) > 180) {
-    if (compass_heading > 180) {
-      compass_heading -= 360;
+  // define car heading between ±180°.  Could also be 0 -> 360, but doing other.
+  if (abs(car_heading) > 180) {
+    if (car_heading > 180) {
+      car_heading -= 360;
     }
-    if (compass_heading < -180) {
-      compass_heading += 360;
+    if (car_heading < -180) {
+      car_heading += 360;
     }
   }
 
-  heading_error = compass_heading - gps_heading;
+  heading_error = car_heading - gps_heading;
   // wrap heading_error so it is between -180 and 180
   if (heading_error < -180) {
     heading_error += 360;
@@ -44,6 +51,7 @@ void get_compass_data(float target_lat, float target_lon) {
   if (heading_error > 180) {
     heading_error += -360;
   }
+
 }  //End of get_compass_data
 
 
