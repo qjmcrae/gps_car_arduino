@@ -5,8 +5,7 @@
 ///////////////////////////////////////////////////////////////////////////
 void setup() {
   Serial1.begin(9600);
-  // Serial.begin(9600);
-  // delay(2000);
+  WiFi.lowPowerMode();
 
   // Serial.println(F("Starting Setup"));
   // delay(1000);
@@ -15,17 +14,16 @@ void setup() {
   pinMode(LEDG, OUTPUT);  // LED(25)
   pinMode(LEDB, OUTPUT);  // LED(26)
 
-  pinMode(Clk, INPUT);                  // D2
-  pinMode(Dt, INPUT);                   // D3
-  pinMode(Sw, INPUT_PULLUP);            // D4
-  pinMode(pixel_pin, OUTPUT);           // D8
-  pinMode(esc_servo_pin, OUTPUT);       // D9
-  pinMode(steering_servo_pin, OUTPUT);  // D10
-  pinMode(green_car_pin, INPUT_PULLUP); // D11
-  pinMode(hall_pin, INPUT);             // D12
-  pinMode(buzzer_pin, OUTPUT);          // D13
+  pinMode(Clk, INPUT);                   // D2
+  pinMode(Dt, INPUT);                    // D3
+  pinMode(Sw, INPUT_PULLUP);             // D4
+  pinMode(pixel_pin, OUTPUT);            // D8
+  pinMode(esc_servo_pin, OUTPUT);        // D9
+  pinMode(steering_servo_pin, OUTPUT);   // D10
+  pinMode(green_car_pin, INPUT_PULLUP);  // D11
+  pinMode(hall_pin, INPUT);              // D12
+  pinMode(buzzer_pin, OUTPUT);           // D13
 
-  pinMode(batt_cell_1_pin, INPUT);    // A0
   pinMode(batt_volt_pin, INPUT);      // A1
   pinMode(steering_trim_pin, INPUT);  // A2
 
@@ -47,8 +45,8 @@ void setup() {
   delay(250);
 
   // Test to see which LCD screen is attached - only ones I am aware of are 0x27 and 0x3F
-  lcd = lcd_0x27;  // Assume it is the 0x27, then if 0x3F is there, switch...
-  byte address = 63;                 // This is 0x3F
+  lcd = lcd_0x27;     // Assume it is the 0x27, then if 0x3F is there, switch...
+  byte address = 63;  // This is 0x3F
   Wire.beginTransmission(address);
   byte error = Wire.endTransmission();
   if (error == 0) {  // this means there is a 0x3F - if it is there, assume it is the only one there
@@ -72,17 +70,15 @@ void setup() {
 
   // Fix Steering offsets
 
- ///////////////////////////////////////////////////  WARNING  //////////////////////////////////////
-  // 
+  ///////////////////////////////////////////////////  WARNING  //////////////////////////////////////
+  //
   // For this to make sense, you MUST run it on each car individually to set the pot, then leave the
   // pot in that same position from then on.  If it gets moved, or if it is not run, it will make
   // the wheels point in weird directions!
   //
   ////////////////////////////////////////////////////////////////////////////////////////////////////
- 
-  int range = 15;
-  // set_steering(range); // Uncomment to set steering trim
-  steering_trim = map(analogRead(steering_trim_pin), 0, 1023, -range, range);  // potentially change to pwm values 1000 - 2000
+
+  steering_trim = map(analogRead(steering_trim_pin), 0, 1023, -servo_trim_range, servo_trim_range);  // potentially change to pwm values 1000 - 2000
   servo_straight = servo_straight + steering_trim;
   servo_left = servo_left + steering_trim;
   servo_right = servo_right + steering_trim;
@@ -152,13 +148,21 @@ void setup() {
 // ************************   BEGIN LOOP   ************************//
 void loop() {
 
-
+  // long press encoder button (> 2 sec) to enter steering adjust mode
+  unsigned long now = millis();  // so I don't keep calling millis for the next few logical steps...
+  static long last_Sw = now;
+  if (!digitalRead(Sw))  // pressing switch
+  {
+    if ((now - last_Sw) > 2000) set_steering(servo_trim_range);
+  }  // switch is not on
+  else
+    last_Sw = now;
   static unsigned long brake_time;
   float target_lat = target_lats[ind_gps];
   float target_lon = target_longs[ind_gps];
 
-  // if gps not there after 60 seconds, stop the program ...
-  if (millis() > 30000 && gps.charsProcessed() < 10)
+  // if gps not there after 15 seconds, stop the program ...
+  if (millis() > 15000 && gps.charsProcessed() < 10)
     stop_no_gps();  // Stop the program, display "Check Wiring" error
 
   while (Serial1.available() > 0) {
@@ -193,7 +197,7 @@ void loop() {
     //  update servo command every so often ...
     if (millis() > servo_write_time) {
 
-      if (fabs(dist_to_target) < min_dist_to_tgt)  // check if we're there!
+      if (fabs(dist_to_target) < min_dist_to_tgt)  // check if we're there! Are we close enough?
       {
         ind_gps++;
 
@@ -202,9 +206,8 @@ void loop() {
           armed = 1;
           wag_servo(150);  // arming warning ...
           countdown();     // blink, beep, display countdown ...
-
-        }     //
-        else  // Armed, or in other words, going for it and found target ...
+        }                  //
+        else               // Already armed, or in other words, going for it and found target (targets #2 - end) ...
         {
           esc_servo.write(esc_full_reverse);  // Brake at target
 
@@ -232,7 +235,7 @@ void loop() {
               delay(5000);
             }
           }
-
+          // if not at last one ...
           digitalWrite(LEDR, LOW);
           digitalWrite(LEDG, LOW);
           for (int i = 0; i < 10; i++)  // flash blue when at target
@@ -246,14 +249,11 @@ void loop() {
           servo_command = servo_straight;
           esc_command = esc_stop;
 
-        }  // end Armed / not armed
+        }  // end Armed / not armed on finding target
 
-        prev_esc_Time = micros();
-        // prev_servo_Time = millis();
-
-      }                                            // end within 2m of target ...
-      else if (dist_lidar < 40 && dist_lidar > 1)  // check for stuff in the way ...
-      {                                            // if we came close to something, 1st hit the brakes for 2 seconds, then just set to 0 ...
+      }                                           // end within 2m of target ...
+      else if (dist_lidar < 3 && dist_lidar > 0)  // Something is in the way...
+      {                                           // if we came close to something, 1st hit the brakes for 2 seconds, then just set to 0 ...
         int flash_on;
         servo_command = servo_straight;
         if (brake_time + 2000 > millis()) {
@@ -269,10 +269,11 @@ void loop() {
         digitalWrite(LEDG, LOW);
         flash(LEDB, 250, 150, 0, flash_on, B);
 
-        prev_esc_Time = micros();
+        // prev_esc_Time = micros();
         // prev_servo_Time = millis();
 
-      } else  // steer to gps target, lights on white
+      }     //
+      else  // Not close to target, nothing in the way, so steer to gps target, lights on white
       {
         brake_time = millis();  // update brake time
 
@@ -280,43 +281,34 @@ void loop() {
         steer_command = constrain(servo_straight - kp * heading_error, servo_left, servo_right);
         servo_command = steer_command;
 
-        if (!armed)  // calc rpm while not armed
+        if (!armed) rpm = calc_mag_rpm();  // calc rpm while not armed - otherwise called in PID function
+        else                               // determine throttle command, either using PID or Open Loop
         {
-          rpm = calc_mag_rpm();
-        } else  // Don't go until armed
-        {
-          if (pid_trigger == 0)  // Pick between hard coded and pid
+          if (pid_trigger == 0)  // Pick between hard coded and pid - this is open loop / hard-coded
           {
             int esc_forward = esc_slow_pavement;
             //  set esc command based on how far away from target...
             esc_command = esc_forward;  // go fairly slow
-            if (dist_to_target > 30) {
-              esc_command = esc_forward + .1 * esc_default;  // more than 30m away, go faster than normal
-            } else if (dist_to_target > 10) {
-              esc_command = esc_forward + .05 * esc_default;  // more than 10m away, go a bit faster than normal
-            }
+            // if (dist_to_target > 30) {
+            //   esc_command = esc_forward + .1 * esc_default;  // more than 30m away, go faster than normal
+            // } else if (dist_to_target > 10) {
+            //   esc_command = esc_forward + .05 * esc_default;  // more than 10m away, go a bit faster than normal
+            // }
 
             // if we are going too fast, slow back down...
-            if (gps.speed.mph() > 7.5) {
-              esc_command = esc_forward;
-            }
-          } else  // pid
+            // if (gps.speed.mph() > 7.5) {
+            //   esc_command = esc_forward;
+            // }
+          }     //
+          else  // Use PID to determine throttle...
           {
+            if (dist_to_target > 30) target_speed = 6.5;     // more than 30 m away, go faster
+            else if (dist_to_target > 10) target_speed = 5;  // closer than 30m, but further than 10m
+            else target_speed = 4;                           // closer than 10m
 
-            if (dist_to_target > 5) {
-              target_speed = 6;  // more than 10m away, go faster
-            } else {
-              target_speed = 4;
-            }
+            pid_command = esc_pid(target_speed);
 
-            if (hall_count > 0) {
-              pid_command = esc_pid(target_speed);
-            } else if (micros() > (prev_esc_Time + (1 * 1000 * 1000))) {
-              pid_command = esc_pid(target_speed);
-            }
-
-            pid_command = constrain(pid_command, esc_default, esc_full_forward);
-            // to limit output of pid, to change behavior
+            pid_command = constrain(pid_command, esc_default, esc_full_forward);  // limit output of pid, to reasonable values
             esc_command = pid_command;
           }
         }
@@ -335,9 +327,7 @@ void loop() {
           digitalWrite(buzzer_pin, 1);
           beep_off = now + 40;  // the 40 is how long it beeps every time, the "beep_delay" is how long it waits between beeps
         }
-        if (now > beep_off) {
-          digitalWrite(buzzer_pin, 0);
-        }
+        if (now > beep_off) digitalWrite(buzzer_pin, 0);
       }
 
       steering_servo.write(servo_command);
@@ -347,11 +337,11 @@ void loop() {
   }    // end have gps
 
 
-  unsigned long now = millis();
-  //  if (now > neo_time) neo_design(1);
-  // neo_design(2000);
-  neo_design(911);
+  now = millis();
+  // if (now > neo_time) neo_design(1);
+  neo_design(2000);
+  // neo_design(911);
   if (now > disp_time) disp_lcd_info();  // display info to LCD screen
 
 }  // end of loop
-// ************************   END LOOP   ************************/
+   // ************************   END LOOP   ***************

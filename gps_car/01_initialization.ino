@@ -78,10 +78,9 @@ byte buzzer_pin = 13;          // Piezo electric buzzer pin
 // pins A4, A5 used for I2C protocol...
 // SDA = A4;
 // SCL = A5;
-// Pins A3,A6,A7 unused
-byte batt_cell_1_pin = A0;    // input pin for voltage divider of cell 1 of main battery
-byte batt_volt_pin = A1;      // input pin for voltage divider of total voltage of main battery
-byte steering_trim_pin = A2;  // analog read of pot to correct steering of cars
+// Pins A0,A3,A6,A7 unused
+int batt_volt_pin = A1;      // input pin for voltage divider of total voltage of main battery
+int steering_trim_pin = A2;  // analog read of pot to correct steering of cars
 
 
 //=============== Initialize Variables ================//
@@ -90,8 +89,6 @@ byte steering_trim_pin = A2;  // analog read of pot to correct steering of cars
 
 // Battery Voltage
 float volts_total;
-float volts_cell_1;
-float volts_cell_2;
 
 bool beeped = 0;
 
@@ -123,15 +120,15 @@ bool hmc_flag = 0;        // flag to determine if we are using the HMC or the QM
 bool armed = 0;           // don't arm until arive at 1st gps location
 byte ind_gps = 0;         // This is the index to which of the gps lat/long points we are currently going for ...
 float dist_to_target;     // changed from int, may need to re-layout screen
-int gps_heading;          // maybe use float
+int gps_heading;          // heading from current location to next GPS point
 int heading_error;        // maybe use float
-int compass_heading;      // maybe use float
+int car_heading;          // heading of car - uses compass if going slow, possibly use GPS if going fast
 int compass_offset = 90;  // This is because the compass is mounted x° off straight
 
 int dist_traveled = 0;
 char gps_time[9];
 char gps_date[11];
-char gps_speed[3];
+int gps_speed;
 bool ampm = 0;
 
 // Servo variables ...
@@ -140,18 +137,22 @@ long servo_write_delay = 1000 / servo_write_freq;
 unsigned long servo_write_time = 0;
 byte servo_command = 90;
 int esc_command = 1500;
+int servo_trim_range = 15;
+int servo_trim_time = 20;
+
 
 // Values range between ~40 and ~140
 byte servo_straight = 90;
 byte servo_left = 55;    // 60;
 byte servo_right = 125;  // 127;
 byte servo_large_circle = 105;
-byte steering_trim;
+int steering_trim;
 
 // Values range between ~1000 and ~2000
 int esc_default = 1500;        // 90;
 int esc_slow_grass = 1606;     // 109;
-int esc_slow_pavement = 1578;  // 104;
+// qj - int esc_slow_pavement = 1578;  // 104;
+int esc_slow_pavement = 104;
 int esc_fast_forward = 1778;   // 140;
 int esc_full_forward = 1944;   // 170;
 int esc_slow_reverse = 1444;   // 80;
@@ -166,9 +167,6 @@ byte target_speed;
 float rpm = 0;
 int pid_command = esc_command;
 int steer_command = servo_command;
-unsigned long prev_esc_Time = 0;
-// unsigned long prev_servo_Time = 0;  // For Steering PID, Haven't set up yet
-
 
 //=============== Initialize Libraries ================//
 // Include Libraries, Setup objects, modules, etc.
