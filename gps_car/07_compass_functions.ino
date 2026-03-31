@@ -11,7 +11,7 @@ void get_compass_data(float target_lat, float target_lon) {
   if (hmc_flag) {
     sensors_event_t event;
     compass_HMC.getEvent(&event);
-    compass_heading = atan2(event.magnetic.y, event.magnetic.x) * 180.0 / M_PI;  // - compass_offset;
+    compass_heading = atan2((event.magnetic.y - offsetY), (event.magnetic.x - offsetX)) * 180.0 / M_PI;  // - compass_offset;
   } else {
     compass_QMC.read();
     compass_heading = compass_QMC.getAzimuth();
@@ -76,46 +76,59 @@ void calibrate_compass() {
   lcd.print(F("Rotate car 360°"));
   while (1)  //
   {
-    static float max_x;
-    static float min_x;
-    static float max_y;
-    static float min_y;
-    static float max_z;
-    static float min_z;
+      float xMin = 9999;
+      float zMin = 9999;
+      float yMin = 9999;
+      float yMax = -9999;
+      float xMax = -9999;
+      float zMax = -9999;
 
     if (hmc_flag)  //
     {
-      sensors_event_t event;
-      compass_HMC.getEvent(&event);
-      max_x = max(max_x, event.magnetic.x);
-      min_x = min(min_x, event.magnetic.x);
-      max_y = max(max_y, event.magnetic.y);
-      min_y = min(min_y, event.magnetic.y);
-      max_z = max(max_z, event.magnetic.z);
-      min_z = min(min_z, event.magnetic.z);
+      unsigned long start_time = millis();
+
+
+      while (millis() - start_time < 20000) { // Spin car for 20 seconds so we can get the highest and lowest values
+        sensors_event_t event;
+        compass_HMC.getEvent(&event);
+
+        if (event.magnetic.x < xMin) xMin = event.magnetic.x;
+        if (event.magnetic.x > xMax) xMax = event.magnetic.x;
+        if (event.magnetic.y < yMin) yMin = event.magnetic.y;
+        if (event.magnetic.y > yMax) yMax = event.magnetic.y;
+        if (event.magnetic.z < zMin) zMin = event.magnetic.z;
+        if (event.magnetic.z > zMax) zMax = event.magnetic.z;
+
+
+        delay(10);
+      }
+
+      offsetX = (xMax + xMin) / 2;
+      offsetY = (yMax + yMin) / 2;
+      offsetZ = (zMax + zMin) / 2;
       lcd.setCursor(0, 1);
       lcd.print("x:");
-      lcd.print(min_x,1);
+      lcd.print(xMin,1);
       lcd.print(",");
-      lcd.print(max_x,1);
+      lcd.print(xMax,1);
       lcd.print(",");
-      lcd.print( (min_x + max_x) / 2,2 );
+      lcd.print(offsetX);
 
       lcd.setCursor(0, 2);
       lcd.print("y:");
-      lcd.print(min_y,1);
+      lcd.print(yMin,1);
       lcd.print(",");
-      lcd.print(max_y,1);
+      lcd.print(yMax,1);
       lcd.print(",");
-      lcd.print( (min_y + max_y) / 2, 2);
+      lcd.print(offsetY);
 
       lcd.setCursor(0, 3);
       lcd.print("z:");
-      lcd.print(min_z,1);
+      lcd.print(zMin,1);
       lcd.print(",");
-      lcd.print(max_z,1);
+      lcd.print(zMax,1);
       lcd.print(",");
-      lcd.print( (min_z + max_z) / 2, 2);
+      lcd.print(offsetZ);
 
       // delay(250);
     }     //
@@ -124,4 +137,4 @@ void calibrate_compass() {
       compass_QMC.calibrate();
     }
   }
-}
+}
