@@ -47,6 +47,9 @@ void disp_lcd_info() {
     case 7:  // Battery Information
       Object_Avoid_Screen();
       break;
+    case 8:
+      compass_Screen();
+      break;
     default:
       lcd.setCursor(0, 1);
       lcd.print(F("**Undefined Screen**"));
@@ -282,6 +285,29 @@ void Object_Avoid_Screen() {  // Radio Information
   if (heading_error < 0) i = i - 1;
   lcd.setCursor(i, 3);
   lcd.print(heading_error);
+}
+
+void compass_Screen() {
+  // 01234567890123456789
+  //0      Compass Info
+  //1
+  if (digitalRead(Sw) == LOW) {
+    calibrate_compass();
+  }
+  lcd.setCursor(0, 0);
+  lcd.print(F("   compass info   "));
+  lcd.setCursor(0, 1);
+  if ((offsetX == 0 && offsetY == 0)) {
+    lcd.print(F("Press encode"));
+    lcd.setCursor(0, 2);
+    lcd.print(F("To calibrate"));
+  } else {
+      lcd.print(F("offsetX: "));
+      lcd.print(offsetX);
+      lcd.setCursor(0, 2);
+      lcd.print(F("offsetY: "));
+      lcd.print(offsetY);
+  }
 }
 
 void blink_acquiring() {

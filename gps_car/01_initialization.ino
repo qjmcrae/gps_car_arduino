@@ -71,7 +71,7 @@ bool beeped = 0;
 
 volatile byte LCD_screen = 1;
 byte LCD_screen_old = 0;
-byte num_LCD_screens = 7;
+byte num_LCD_screens = 8;
 
 int neo_delay = 100;
 unsigned long neo_time = 0;
