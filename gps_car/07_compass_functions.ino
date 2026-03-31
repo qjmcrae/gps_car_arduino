@@ -43,15 +43,6 @@ void get_compass_data(float target_lat, float target_lon) {
     }
   }
 
-  heading_error = car_heading - gps_heading;
-  // wrap heading_error so it is between -180 and 180
-  if (heading_error < -180) {
-    heading_error += 360;
-  }
-  if (heading_error > 180) {
-    heading_error += -360;
-  }
-
 }  //End of get_compass_data
 
 
@@ -72,3 +63,65 @@ void stop_no_compass() {
     Serial.println(F("Ooops, no Compass detected ... Check your wiring!"));
   }
 }  //End of stop_no_compass
+
+
+// ********************  CALIBRATE COMPASS  ****************************//
+
+// This is currently a 1-time deal - must comment out call to this for normal use
+// Want the min/max x and y readings from the compass for calibration
+
+void calibrate_compass() {
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print(F("Rotate car 360°"));
+  while (1)  //
+  {
+    static float max_x;
+    static float min_x;
+    static float max_y;
+    static float min_y;
+    static float max_z;
+    static float min_z;
+
+    if (hmc_flag)  //
+    {
+      sensors_event_t event;
+      compass_HMC.getEvent(&event);
+      max_x = max(max_x, event.magnetic.x);
+      min_x = min(min_x, event.magnetic.x);
+      max_y = max(max_y, event.magnetic.y);
+      min_y = min(min_y, event.magnetic.y);
+      max_z = max(max_z, event.magnetic.z);
+      min_z = min(min_z, event.magnetic.z);
+      lcd.setCursor(0, 1);
+      lcd.print("x:");
+      lcd.print(min_x,1);
+      lcd.print(",");
+      lcd.print(max_x,1);
+      lcd.print(",");
+      lcd.print( (min_x + max_x) / 2,2 );
+
+      lcd.setCursor(0, 2);
+      lcd.print("y:");
+      lcd.print(min_y,1);
+      lcd.print(",");
+      lcd.print(max_y,1);
+      lcd.print(",");
+      lcd.print( (min_y + max_y) / 2, 2);
+
+      lcd.setCursor(0, 3);
+      lcd.print("z:");
+      lcd.print(min_z,1);
+      lcd.print(",");
+      lcd.print(max_z,1);
+      lcd.print(",");
+      lcd.print( (min_z + max_z) / 2, 2);
+
+      // delay(250);
+    }     //
+    else  //
+    {
+      compass_QMC.calibrate();
+    }
+  }
+}

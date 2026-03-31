@@ -10,7 +10,7 @@
 
 // Student-avaliable variables...
 const char team_name[] = "   Slick Science    ";
-const char sub_name[] = "(put sub-name here) ";
+const char sub_name[] = "    SHAI_HULUD ";
 
 byte min_dist_to_tgt = 2;   // minimum distance (in meters) to target before moving on to next target - More accurate closer, but harder
 byte delay_at_target = 2;   // delay for x seconds (and wag servo) once at gps target before going to next target - makes it more obvious when you get there

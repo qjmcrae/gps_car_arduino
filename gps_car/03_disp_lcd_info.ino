@@ -3,7 +3,7 @@
 // General funcionality of LCD
 void disp_lcd_info() {
 
-  disp_time = disp_time + disp_delay;
+  disp_time += disp_delay;
 
   // Constrain LCD_screen to correct values - This used to be done in ISR, but figure this is better...
 
@@ -43,6 +43,9 @@ void disp_lcd_info() {
       break;
     case 6:  // Battery Information
       Battery_Screen();
+      break;
+    case 7:  // Battery Information
+      Object_Avoid_Screen();
       break;
     default:
       lcd.setCursor(0, 1);
@@ -120,7 +123,7 @@ void Main_Screen() {  // Main Screen
   lcd.setCursor(0, 1);
   lcd.print(F("LIDAR:     "));
   lcd.setCursor(6, 1);
-  lcd.print(constrain(dist_lidar,0,99),1);
+  lcd.print(constrain(dist_lidar, 0, 99), 1);
 
   // clear heading and gps data, so i don't have to clear the whole line every time
   lcd.setCursor(0, 2);
@@ -235,21 +238,50 @@ void Battery_Screen() {  // Battery Information
   //1  Cell 1: ##.## V
   //2  Cell 2: ##.## V
   //3  Total : ##.## V
-  calc_batt_voltage();  // measure battery voltage
+  // calc_batt_voltage();  // measure battery voltage
   lcd.setCursor(0, 0);
   lcd.print(F("   Battery Status   "));
-  // lcd.setCursor(0, 1);
-  // lcd.print(F("Cell 1: "));
-  // lcd.print(volts_cell_1);
-  // lcd.print(F(" V"));
-  // lcd.setCursor(0, 2);
-  // lcd.print(F("Cell 2: "));
-  // lcd.print(volts_cell_2);
-  // lcd.print(F(" V"));
+  if (LOW_BATTERY) {
+    lcd.setCursor(0, 1);
+    lcd.print("WARNING!!!");
+    lcd.setCursor(0, 2);
+    lcd.print("Low Battery!!!");
+  }
   lcd.setCursor(0, 3);
-  lcd.print(F("Total : "));
+  lcd.print(F("Battery : "));
   lcd.print(volts_total);
   lcd.print(F(" V"));
+}
+
+
+void Object_Avoid_Screen() {  // Radio Information
+  //   01234567890123456789
+  //0   Object Avoid Info
+  //1  GPS/OA Hdg:-###,-###
+  //2  Desired Hdg: ###
+  //3  Heading Error:  ###
+  lcd.setCursor(0, 0);
+  lcd.print(F("Avoid - Dist:       "));
+  lcd.setCursor(13, 0);
+  lcd.print(dist_lidar);
+  lcd.setCursor(0, 1);
+  lcd.print(F("GPS/OA Hdg:         "));
+  lcd.setCursor(11, 1);
+  lcd.print(gps_heading);
+  lcd.print("/");
+  lcd.print(avoid_heading);
+  lcd.setCursor(0, 2);
+  lcd.print(F("Act/Des Hg:        "));
+  lcd.setCursor(11, 2);
+  lcd.print(car_heading);
+  lcd.print("/");
+  lcd.print(desired_heading);
+  lcd.setCursor(0, 3);
+  lcd.print(F("Heading Error:      "));
+  byte i = 15;
+  if (heading_error < 0) i = i - 1;
+  lcd.setCursor(i, 3);
+  lcd.print(heading_error);
 }
 
 void blink_acquiring() {

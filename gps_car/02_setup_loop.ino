@@ -7,6 +7,7 @@ void setup() {
   Serial1.begin(9600);
   WiFi.lowPowerMode();
 
+  // Serial.begin(9600);
   // Serial.println(F("Starting Setup"));
   // delay(1000);
 
@@ -133,6 +134,9 @@ void setup() {
 
   neo_design(0);  // turn neo_pixel off
 
+
+
+  // calibrate_compass();
   // Serial.println(F("end of setup"));
 }  // end of setup
 // ************************   END SETUP   ************************//
@@ -178,11 +182,35 @@ void loop() {
   // get compass data ...
   get_compass_data(target_lat, target_lon);
 
+  // Check battery status..
+  if (millis() > calc_batt_time) calc_batt_voltage();
+
   // get distance from LIDAR sensor
   get_lidar_data();
 
+  if (dist_lidar > 20 || dist_lidar < 3) avoid_heading = 0;
+  else avoid_heading = 90 * exp(-0.15 * dist_lidar);
+
+  desired_heading = gps_heading + avoid_heading;
+
+  // calculate heading error, or difference between where we are pointed and where we want to point
+  heading_error = car_heading - desired_heading;
+  // wrap heading_error so it is between -180 and 180
+  if (heading_error < -180) {
+    heading_error += 360;
+  }
+  if (heading_error > 180) {
+    heading_error += -360;
+  }
+
+
+  //  ****************   Determine car state...    ********************  //
+
+  // Low Battery
+  if (LOW_BATTERY) currentState = STATE_LOW_BATTERY;
+
   // No GPS
-  if (!gps.location.isValid() || gps.location.age() > 1250) currentState = STATE_NO_GPS;
+  else if (!gps.location.isValid() || gps.location.age() > 1250) currentState = STATE_NO_GPS;
 
   // There is an obstacle too close - stop!
   else if (dist_lidar < 3 && dist_lidar > 0) currentState = STATE_OBSTACLE_STOP;
@@ -196,18 +224,27 @@ void loop() {
   // Driving
   else currentState = STATE_DRIVING;
 
-
   if (millis() > servo_write_time) {
     switch (currentState) {
+
+      case STATE_LOW_BATTERY:
+        esc_servo.write(esc_stop);
+        steering_servo.write(servo_straight); 
+        digitalWrite(buzzer_pin,1);   // just beep!
+        break;
+
+
       case STATE_NO_GPS:
         flash(LEDR, 250, 250, 255, 0, R);  // flash red lights until GPS acquired
         // set wheels straight, servo stopped
-        steering_servo.write(servo_straight);
-        esc_servo.write(esc_stop);
+        servo_command = servo_straight;
+        esc_command = esc_stop;
+        LCD_screen = 6;  // this is the battery screen - force it to display what is happening
         break;
 
 
       case STATE_OBSTACLE_STOP:
+        digitalWrite(buzzer_pin, 0);  // in case it is mid-beep...
         int flash_on;
         servo_command = servo_straight;
         if (brake_time + 2000 > millis()) {
@@ -239,6 +276,7 @@ void loop() {
         }                  //
         else               // Already armed, or in other words, going for it and found target (targets #2 - end) ...
         {
+          // esc_command = esc_full_reverse;  // Brake at target
           esc_servo.write(esc_full_reverse);  // Brake at target
 
           wag_servo(servo_wag_speed, delay_at_target);  // Signal at target
@@ -284,7 +322,8 @@ void loop() {
 
 
       case STATE_DRIVING:
-        brake_time = millis();  // update brake time
+        if (beeped != 1) beep();  // beep first time it acquires GPS
+        brake_time = millis();    // update brake time
 
         int kp = 1;  // default to gain of 1 for GPS Car, primarily to set direction if using old test platform...
         steer_command = constrain(servo_straight - kp * heading_error, servo_left, servo_right);
@@ -293,31 +332,20 @@ void loop() {
         if (pid_trigger == 0)  // Pick between hard coded and pid - this is open loop / hard-coded
         {
           int esc_forward = esc_slow_pavement;
-          //  set esc command based on how far away from target...
           esc_command = esc_forward;  // go fairly slow
-          // if (dist_to_target > 30) {
-          //   esc_command = esc_forward + .1 * esc_default;  // more than 30m away, go faster than normal
-          // } else if (dist_to_target > 10) {
-          //   esc_command = esc_forward + .05 * esc_default;  // more than 10m away, go a bit faster than normal
-          // }
 
-          // if we are going too fast, slow back down...
-          // if (gps.speed.mph() > 7.5) {
-          //   esc_command = esc_forward;
-          // }
         }     //
         else  // Use PID to determine throttle...
         {
-          if (dist_to_target > 30) target_speed = 6.5;     // more than 30 m away, go faster
+          if (dist_to_target > 30) target_speed = 6;       // more than 30 m away, go faster
           else if (dist_to_target > 10) target_speed = 5;  // closer than 30m, but further than 10m
           else target_speed = 3.5;                         // closer than 10m
 
           pid_command = esc_pid(target_speed);
-
           pid_command = constrain(pid_command, esc_default, esc_full_forward);  // limit output of pid, to reasonable values
           esc_command = pid_command;
         }
-
+        if (!armed) esc_command = esc_stop;
 
         digitalWrite(LEDR, HIGH);
         digitalWrite(LEDG, HIGH);

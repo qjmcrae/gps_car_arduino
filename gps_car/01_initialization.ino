@@ -64,13 +64,14 @@ int steering_trim_pin = A2;  // analog read of pot to correct steering of cars
 //=====================================================//
 
 // Battery Voltage
-float volts_total;
+float volts_total = 7.5;  //probably doesn't matter, but initializing to make filter happy
+bool LOW_BATTERY = 0;
 
 bool beeped = 0;
 
 volatile byte LCD_screen = 1;
 byte LCD_screen_old = 0;
-byte num_LCD_screens = 6;
+byte num_LCD_screens = 7;
 
 int neo_delay = 100;
 unsigned long neo_time = 0;
@@ -78,6 +79,10 @@ unsigned long neo_time = 0;
 byte disp_freq = 2;  // in hz
 int disp_delay = 1000 / disp_freq;
 unsigned long disp_time = 0;
+
+byte calc_batt_freq = 5;  // in hz
+int calc_batt_delay = 1000 / calc_batt_freq;
+unsigned long calc_batt_time = 0;
 
 // Are these needed?
 // float calc_dist_freq = 0.5;  // in hz
@@ -97,8 +102,10 @@ bool armed = 0;           // don't arm until arive at 1st gps location
 byte ind_gps = 0;         // This is the index to which of the gps lat/long points we are currently going for ...
 float dist_to_target;     // changed from int, may need to re-layout screen
 int gps_heading;          // heading from current location to next GPS point
-int heading_error;        // maybe use float
 int car_heading;          // heading of car - uses compass if going slow, possibly use GPS if going fast
+int avoid_heading;        // heading to avoid stuff - currently f(distance)  = 90*e^-0.15*dist
+int desired_heading;      // combination of gps_heading and avoid_heading
+int heading_error;        // difference between where we want to be pointing and where we are pointing - want to be 0
 int compass_offset = 90;  // This is because the compass is mounted x° off straight
 
 int dist_traveled = 0;
@@ -137,7 +144,7 @@ int esc_full_reverse = 1111;   // 20;
 int esc_stop = esc_default;
 
 // PID Controller Stuff...
-bool pid_trigger = 1;         // Pick between hard coded and pid
+bool pid_trigger = 0;         // Pick between hard coded and pid
 volatile int hall_count = 0;  // count for number of times isr_hall() has been tripped in a cycle
 byte target_speed;
 float rpm = 0;
@@ -152,7 +159,8 @@ enum Car_state {
   STATE_NO_GPS,
   STATE_OBSTACLE_STOP,
   STATE_AT_TARGET,
-  STATE_DRIVING
+  STATE_DRIVING,
+  STATE_LOW_BATTERY
 };
 Car_state currentState;
 
