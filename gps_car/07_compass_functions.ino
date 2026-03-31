@@ -127,6 +127,12 @@ void calibrate_compass() {
       lcd.print(zMax,1);
       lcd.print(",");
       lcd.print(offsetZ);
+
+      char finalBuffer[15];
+
+    sprintf(finalBuffer, "%.2f:%.2f");
+      // writing the data that we just got
+    FS_writeData(compass_calibration, finalBuffer, sizeof(finalBuffer));
       }     //
     else  //
     {
