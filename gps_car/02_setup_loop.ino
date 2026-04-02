@@ -138,9 +138,13 @@ void setup() {
     myFS = new LittleFS_MBED();
     if (myFS->init()) {
       FS_init = true;
-      // Serial.println("LittleFS mounted!");
+      Serial.println("LittleFS mounted!");
     } else {
-      // Serial.println("LITTLEFS MOUNT FAILED");
+      Serial.println("LITTLEFS MOUNT FAILED");
+    }
+
+    if(FORCE_REFORMAT) { // removes files
+      remove(compass_calibration);
     }
 
     retrieve_Compass_Data();
