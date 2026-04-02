@@ -73,7 +73,7 @@ void stop_no_compass() {
 void calibrate_compass() {
   lcd.clear();
   lcd.setCursor(0, 0);
-  lcd.print(F("Rotate car 360°"));
+  lcd.print(F("Rotate car all directions"));
       float xMin = 9999;
       float zMin = 9999;
       float yMin = 9999;
@@ -104,32 +104,39 @@ void calibrate_compass() {
       offsetX = (xMax + xMin) / 2;
       offsetY = (yMax + yMin) / 2;
       offsetZ = (zMax + zMin) / 2;
-      lcd.setCursor(0, 1);
-      lcd.print("x:");
-      lcd.print(xMin,1);
-      lcd.print(",");
-      lcd.print(xMax,1);
-      lcd.print(",");
-      lcd.print(offsetX);
 
-      lcd.setCursor(0, 2);
-      lcd.print("y:");
-      lcd.print(yMin,1);
-      lcd.print(",");
-      lcd.print(yMax,1);
-      lcd.print(",");
-      lcd.print(offsetY);
 
-      lcd.setCursor(0, 3);
-      lcd.print("z:");
-      lcd.print(zMin,1);
-      lcd.print(",");
-      lcd.print(zMax,1);
-      lcd.print(",");
-      lcd.print(offsetZ);
+      char finalBuffer[25];
+
+    sprintf(finalBuffer, "%.2f:%.2f", offsetX, offsetY);
+      // writing the data that we just got
+    FS_writeData(compass_calibration, finalBuffer, strlen(finalBuffer));
       }     //
     else  //
     {
-      compass_QMC.calibrate(); // THrowing errors saying that calibrate is not part of QMC -C
+      compass_QMC.calibrate();
     }
+}
+
+// ************************   RETRIEVE_COMPASS_DATA   ************************//
+// This function is used to retrieve the compass data from LittleFS on startup. The values are stored as
+// "offsetX:offsetY", this parses both parts and assigns the offsets to the global variables.
+// TODO: add zValue
+//
+void retrieve_Compass_Data() {
+  char temp[25];
+
+  int correct = FS_readData(compass_calibration, temp, sizeof(temp));
+  if (!correct) return;
+
+    char* xValue = strtok(temp, ":");
+    Serial.println(atof(xValue));
+
+    char* yValue = strtok(NULL, ":");
+    Serial.println(atof(yValue));
+
+    offsetX = atof(xValue);
+    // Serial.println(values[0]);
+    offsetY = atof(yValue);
+    // Serial.println(values[1]);
 }
