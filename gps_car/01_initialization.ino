@@ -103,7 +103,7 @@ byte ind_gps = 0;         // This is the index to which of the gps lat/long poin
 float dist_to_target;     // changed from int, may need to re-layout screen
 int gps_heading;          // heading from current location to next GPS point
 int car_heading;          // heading of car - uses compass if going slow, possibly use GPS if going fast
-int avoid_heading;        // heading to avoid stuff - currently f(distance)  = 90*e^-0.15*dist
+float avoid_heading;        // heading to avoid stuff - currently f(distance)  = 90*e^-0.15*dist
 int desired_heading;      // combination of gps_heading and avoid_heading
 int heading_error;        // difference between where we want to be pointing and where we are pointing - want to be 0
 int compass_offset = 90;  // This is because the compass is mounted x° off straight

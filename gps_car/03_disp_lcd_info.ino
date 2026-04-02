@@ -272,7 +272,7 @@ void Object_Avoid_Screen() {  // Radio Information
   lcd.setCursor(11, 1);
   lcd.print(gps_heading);
   lcd.print("/");
-  lcd.print(avoid_heading);
+  lcd.print(int(avoid_heading));
   lcd.setCursor(0, 2);
   lcd.print(F("Act/Des Hg:        "));
   lcd.setCursor(11, 2);

@@ -188,10 +188,16 @@ void loop() {
   // get distance from LIDAR sensor
   get_lidar_data();
 
-  if (dist_lidar > 20 || dist_lidar < 3) avoid_heading = 0;
+  if (dist_lidar > 20 || dist_lidar < 3)
+  {
+    // low pass filter - slowly decay it over time.  alpha likely needs to be updated.
+    float alpha = 0.005;
+    avoid_heading = (1-alpha)*avoid_heading;
+    if (avoid_heading < 3) avoid_heading = 0;
+  }
   else avoid_heading = 90 * exp(-0.15 * dist_lidar);
 
-  desired_heading = gps_heading + avoid_heading;
+  desired_heading = gps_heading + int(avoid_heading);
 
   // calculate heading error, or difference between where we are pointed and where we want to point
   heading_error = car_heading - desired_heading;
