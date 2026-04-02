@@ -130,7 +130,7 @@ void calibrate_compass() {
 
       char finalBuffer[25];
 
-    sprintf(finalBuffer, "%.2f:%.2f:%.2f", offsetX, offsetY, offsetZ);
+    sprintf(finalBuffer, "%.2f:%.2f", offsetX, offsetY);
       // writing the data that we just got
     FS_writeData(compass_calibration, finalBuffer, sizeof(finalBuffer));
       }     //
@@ -143,7 +143,8 @@ void calibrate_compass() {
 // ************************   RETRIEVE_COMPASS_DATA   ************************//
 // This function is used to retrieve the compass data from LittleFS on startup. The values are stored as
 // "offsetX:offsetY", this parses both parts and assigns the offsets to the global variables.
-
+// TODO: add zValue
+//
 void retrieve_Compass_Data() {
   char temp[25];
 
