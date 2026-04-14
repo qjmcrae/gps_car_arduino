@@ -23,15 +23,15 @@ void setup() {
   pinMode(steering_servo_pin, OUTPUT);   // D10
   pinMode(green_car_pin, INPUT_PULLUP);  // D11
   // pinMode(hall_pin, INPUT_PULLUP);       // D12    WARNING!!!  For some reason, don't define this pinMode for the interrupt pin**
-  mbed::DigitalIn hall_pin_fix(p4, PullUp); // This is the equivalent of above line, but for the MBED pins
-  pinMode(buzzer_pin, OUTPUT);           // D13
+  mbed::DigitalIn hall_pin_fix(p4, PullUp);  // This is the equivalent of above line, but for the MBED pins
+  pinMode(buzzer_pin, OUTPUT);               // D13
 
   pinMode(batt_volt_pin, INPUT);      // A1
   pinMode(steering_trim_pin, INPUT);  // A2
 
   delay(10);
 
-  attachInterrupt(digitalPinToInterrupt(Clk), isr_encoder, FALLING);    //D2
+  attachInterrupt(digitalPinToInterrupt(Clk), isr_pid, FALLING);        //D2
   attachInterrupt(digitalPinToInterrupt(hall_pin), isr_hall, FALLING);  //D12
 
 
@@ -138,6 +138,9 @@ void setup() {
 
   neo_design(0);  // turn neo_pixel off
 
+
+  servo_write_time = millis();
+
   // Serial.println(F("end of setup"));
 }  // end of setup
 // ************************   END SETUP   ************************//
@@ -156,15 +159,70 @@ void loop() {
   // Serial.println(digitalRead(hall_pin));
 
 
-  // long press encoder button (> 2 sec) to enter steering adjust mode
+  // // long press encoder button (> 2 sec) to enter steering adjust mode
   unsigned long now = millis();  // so I don't keep calling millis for the next few logical steps...
-  static long last_Sw = now;
-  if (!digitalRead(Sw))  // pressing switch
-  {
-    if ((now - last_Sw) > 2000) set_steering(servo_trim_range);
-  }  // switch is not on
-  else
-    last_Sw = now;
+  // static long last_Sw = now;
+  // if (!digitalRead(Sw))  // pressing switch
+  // {
+  //   if ((now - last_Sw) > 2000) armed = 1;
+  //   else
+  //   {
+  //     armed = 0;
+
+  //   }
+  // }     // switch is not on
+  // else  //
+  // {
+  //   last_Sw = now;
+  // }
+
+
+  //////////////////////////////////////////////~HK Button Code/////////////////////////////////////////
+  Sw_read = digitalRead(Sw);
+  if (Sw_read == LOW)  //
+  {                    //~HK Starts timer once when button pressed
+    unsigned long now = millis();
+    if (Sw_state == 0) Sw_timer = now;
+    Sw_state = 1;  //~HK confirms timer starts only once
+
+    if ((now - Sw_timer) > Sw_delay && Sw_timer != 0) {  //~HK if button held for delay time
+      armed = !armed;
+      Sw_timer = 0;  //~HK end timer
+    }
+  } else {
+    if ((millis() - Sw_timer) < Sw_delay) {  //~HK Counts if short button press
+      Sw_count++;
+    }
+    Sw_timer = 0;  //~HK end timer
+    Sw_state = 0;
+  }
+  ///////////////////////////////////End Button Code////////////////////////////////////
+
+  switch (Sw_count) {  //~HK sets gain variable to correct gain
+    case 0:
+      gain = Kp;
+      break;
+    case 1:
+      gain = Ki;
+      break;
+    case 2:
+      gain = Kd;
+      break;
+    default:  //~HK cycles the variables
+      Sw_count = 0;
+      break;
+  }
+
+
+
+  // if (!digitalRead(Sw))  // pressing switch
+  // {
+  //   if ((now - last_Sw) > 2000) set_steering(servo_trim_range);
+  // }  // switch is not on
+  // else
+  //   last_Sw = now;
+
+
   static unsigned long brake_time;
   float target_lat = target_lats[ind_gps];
   float target_lon = target_longs[ind_gps];
@@ -235,7 +293,7 @@ void loop() {
 
   ///////////////////////////////////////////////////////////////////////////////
   //  For testing!!!  Don't leave these!!!!
-  // currentState = STATE_DRIVING;
+  currentState = STATE_DRIVING;
   // armed = 1;
   //
   ///////////////////////////////////////////////////////////////////////////////
@@ -338,8 +396,8 @@ void loop() {
 
 
       case STATE_DRIVING:
-        if (beeped != 1) beep();  // beep first time it acquires GPS
-        brake_time = millis();    // update brake time
+        // if (beeped != 1) beep();  // beep first time it acquires GPS
+        brake_time = millis();  // update brake time
 
         int kp = 1;  // default to gain of 1 for GPS Car, primarily to set direction if using old test platform...
         steer_command = constrain(servo_straight - kp * heading_error, servo_left, servo_right);
@@ -353,31 +411,37 @@ void loop() {
         }     //
         else  // Use PID to determine throttle...
         {
-          if (dist_to_target > 30) target_speed = 5;       // more than 30 m away, go faster
-          else if (dist_to_target > 10) target_speed = 4;  // closer than 30m, but further than 10m
-          else target_speed = 3;                           // closer than 10m
 
+          target_speed = 5.5;
+
+          // if (dist_to_target > 30) target_speed = 5;       // more than 30 m away, go faster
+          // else if (dist_to_target > 10) target_speed = 4;  // closer than 30m, but further than 10m
+          // else target_speed = 3;                           // closer than 10m
+          if (millis() > pid_time)
           pid_command = esc_pid(target_speed);
           pid_command = constrain(pid_command, esc_default, esc_full_forward);  // limit output of pid, to reasonable values
           esc_command = pid_command;
         }
+
         if (!armed) esc_command = esc_stop;
 
         digitalWrite(LEDR, HIGH);
         digitalWrite(LEDG, HIGH);
         digitalWrite(LEDB, HIGH);
 
-        //  beep progressively quicker as we get closer - this may not work given the delay of how often this is called ...
-        long beep_delay = constrain(map(dist_to_target, 0, 40, 50, 5000), 0, 5000);  // beep faster as it gets closer to the target
-        unsigned long now = millis();
-        static unsigned long beep_on = 0;
-        static unsigned long beep_off;
-        if (now > beep_on) {
-          beep_on = now + beep_delay;
-          digitalWrite(buzzer_pin, 1);
-          beep_off = now + 40;  // the 40 is how long it beeps every time, the "beep_delay" is how long it waits between beeps
-        }
-        if (now > beep_off) digitalWrite(buzzer_pin, 0);
+        // //  beep progressively quicker as we get closer - this may not work given the delay of how often this is called ...
+        // long beep_delay = constrain(map(dist_to_target, 0, 40, 50, 5000), 0, 5000);  // beep faster as it gets closer to the target
+        // unsigned long now = millis();
+        // static unsigned long beep_on = 0;
+        // static unsigned long beep_off;
+        // if (now > beep_on) {
+        //   beep_on = now + beep_delay;
+        //   digitalWrite(buzzer_pin, 1);
+        //   beep_off = now + 40;  // the 40 is how long it beeps every time, the "beep_delay" is how long it waits between beeps
+        // }
+        // if (now > beep_off) digitalWrite(buzzer_pin, 0);
+
+        digitalWrite(buzzer_pin, 0);
         break;
     }
     steering_servo.write(servo_command);
@@ -390,4 +454,3 @@ void loop() {
   // neo_design(911);
   if (now > disp_time) disp_lcd_info();  // display info to LCD screen
 }  // End of loop
-

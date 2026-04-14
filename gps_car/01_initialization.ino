@@ -145,7 +145,11 @@ int esc_full_reverse = 1111;  // 20;
 int esc_stop = esc_default;
 
 // PID Controller Stuff...
-bool pid_trigger = 0;         // Pick between hard coded and pid
+int pid_freq = 20;  // in hz
+long pid_delay = 1000 / pid_freq;
+unsigned long pid_time = 0;
+
+bool pid_trigger = 1;         // Pick between hard coded and pid
 volatile int hall_count = 0;  // count for number of times isr_hall() has been tripped in a cycle
 float target_speed, rpm_speed;
 // float rpm = 0;
@@ -154,6 +158,23 @@ int set_rpm;
 int pid_command = esc_command;
 int steer_command = servo_command;
 long P, I, D;
+
+byte Sw_count = 0;   
+int Sw_timer = 0;    
+byte esc_start = 0;  
+byte Sw_read = 0;    
+byte Sw_state = 0;   
+int Sw_delay = 500;
+
+volatile float gain = 0;
+char *gain_string[] = { "Kp", "Ki", "Kd" };
+volatile float Kp = 0.0;
+volatile float Ki = 0.01;
+volatile float Kd = 0.0;
+
+long delta_t_rpm_call;
+
+
 
 //=============== Different cases in void loop ==============//
 // Change as needed -EH
@@ -167,24 +188,6 @@ enum Car_state {
   STATE_LOW_BATTERY
 };
 Car_state currentState;
-
-//============= different compass offset based on car ============//
-// Change as needed -EH
-//================================================================//
-
-enum which_car {
-    DINO,
-    BUMBLEBEE,
-    JEEVES,
-    GOJIRA,
-    DEEP_THOUGHT,
-    MELLENIAL_FALCON,
-    ROAD_RUNNER,
-    NIGHT_FURY,
-    SERENITY,
-    SHAI_HULUD
-};
-which_car car_name;
 
 
 //============== Compass offsets =========//

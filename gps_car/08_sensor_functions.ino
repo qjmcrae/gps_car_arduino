@@ -34,15 +34,35 @@ void calc_batt_voltage() {
 // ************************   CALC_MAG_RPM   ************************//
 
 // Calculates rpm of magnet wheel
+// int calc_mag_rpm() {
+//   static unsigned long last_micros_rpm = 0;
+//   unsigned long micros_now = micros();
+//   long deltat = micros_now - last_micros_rpm;
+//   // rpm = 6.0E7 * hall_count / (micros_now - last_micros_rpm) / 6.0;
+//   rpm = 1.0E7 * hall_count / deltat / 2.6;  // The 2.6 is to take it from teh encoder to the wheel rpm
+//   // 6 reads\revolution, measured in micro-seconds...
+//   hall_count = 0;
+//   last_micros_rpm = micros_now;
+//   return rpm;
+// }  //End of calc_mag_rpm
+
+
+// Calculates rpm of magnet wheel
 int calc_mag_rpm() {
   static unsigned long last_micros_rpm = 0;
   unsigned long micros_now = micros();
-  rpm = 6.0E7 * hall_count / (micros_now - last_micros_rpm) / 6.0;
+  long deltaT = micros_now - last_micros_rpm;
+// qj -   int rpm_magnet = 6.0E7 * hall_count / deltaT / 6.0;
+  int rpm_magnet = 1.0E7 * hall_count / deltaT;
   // 6 reads\revolution, measured in micro-seconds...
+  float gear_ratio = 2.6;
+  int rpm_wheel = rpm_magnet / gear_ratio;
+  // hall_count_max = max(hall_count_max, hall_count);
   hall_count = 0;
   last_micros_rpm = micros_now;
-  return rpm;
+  return rpm_wheel;
 }  //End of calc_mag_rpm
+
 
 
 
