@@ -145,7 +145,7 @@ int esc_full_reverse = 1111;  // 20;
 int esc_stop = esc_default;
 
 // PID Controller Stuff...
-int pid_freq = 20;  // in hz
+int pid_freq = 100;  // in hz
 long pid_delay = 1000 / pid_freq;
 unsigned long pid_time = 0;
 
@@ -169,7 +169,8 @@ enum Car_state {
   STATE_OBSTACLE_STOP,
   STATE_AT_TARGET,
   STATE_DRIVING,
-  STATE_LOW_BATTERY
+  STATE_LOW_BATTERY,
+  STATE_NO_RPM_READING
 };
 Car_state currentState;
 
