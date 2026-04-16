@@ -243,6 +243,12 @@ void loop() {
   if (millis() > servo_write_time) {
     switch (currentState) {
 
+      case STATE_NO_RPM_READING:
+        esc_servo.write(esc_stop);
+        servo_command = servo_straight;
+        stop_no_rpm_reading();
+        break;
+
       case STATE_LOW_BATTERY:
         esc_command = esc_stop;
         servo_command = servo_straight;
