@@ -212,6 +212,8 @@ void loop() {
 
   avoid_heading = calc_avoidance_angle();
 
+  // whole point of this is...
+  gps_heading = 180;
   desired_heading = gps_heading + int(avoid_heading);
 
   // calculate heading error, or difference between where we are pointed and where we want to point
@@ -227,17 +229,19 @@ void loop() {
 
   //  ****************   Determine car state...    ********************  //
 
+  // For this test, allow low-battery warning, otherwise in driving...
+
   // Low Battery
   if (LOW_BATTERY) currentState = STATE_LOW_BATTERY;
 
-  // No GPS
-  else if (!gps.location.isValid() || gps.location.age() > 1250) currentState = STATE_NO_GPS;
+  // // No GPS
+  // else if (!gps.location.isValid() || gps.location.age() > 1250) currentState = STATE_NO_GPS;
 
-  // There is an obstacle too close - stop!
-  else if (dist_lidar < 3 && dist_lidar > 0) currentState = STATE_OBSTACLE_STOP;
+  // // There is an obstacle too close - stop!
+  // else if (dist_lidar < 3 && dist_lidar > 0) currentState = STATE_OBSTACLE_STOP;
 
-  // At target
-  else if (fabs(dist_to_target) < min_dist_to_tgt) currentState = STATE_AT_TARGET;
+  // // At target
+  // else if (fabs(dist_to_target) < min_dist_to_tgt) currentState = STATE_AT_TARGET;
 
   // Driving
   else currentState = STATE_DRIVING;
@@ -344,10 +348,12 @@ void loop() {
 
       case STATE_DRIVING:
         if (beeped != 1) beep();  // beep first time it acquires GPS
+        digitalWrite(buzzer_pin,0);
         brake_time = millis();    // update brake time
 
         int kp = 1;  // default to gain of 1 for GPS Car, primarily to set direction if using old test platform...
-        steer_command = constrain(servo_straight - kp * heading_error, servo_left, servo_right);
+        // steer_command = constrain(servo_straight - kp * heading_error, servo_left, servo_right);
+        steer_command = constrain(servo_straight + avoid_angle, servo_left, servo_right);
         servo_command = steer_command;
 
         if (pid_flag == 0)  // Pick between hard coded and pid - this is open loop / hard-coded
@@ -359,9 +365,9 @@ void loop() {
         }     //
         else  // Use PID to determine throttle...
         {
-          if (dist_to_target > 30) target_speed = 4.5;       // more than 30 m away, go faster
+          if (dist_to_target > 30) target_speed = 4.5;     // more than 30 m away, go faster
           else if (dist_to_target > 10) target_speed = 4;  // closer than 30m, but further than 10m
-          else target_speed = 3.5;                           // closer than 10m
+          else target_speed = 3.5;                         // closer than 10m
 
           if (millis() > pid_time)
             pid_command = esc_pid(target_speed);                                // internally calls calc_rpm() - note, this is at a different frequency than servo_update time
@@ -381,7 +387,7 @@ void loop() {
         static unsigned long beep_off;
         if (now > beep_on) {
           beep_on = now + beep_delay;
-          digitalWrite(buzzer_pin, 1);
+// qj - for this sample          digitalWrite(buzzer_pin, 1);
           beep_off = now + 40;  // the 40 is how long it beeps every time, the "beep_delay" is how long it waits between beeps
         }
         if (now > beep_off) digitalWrite(buzzer_pin, 0);

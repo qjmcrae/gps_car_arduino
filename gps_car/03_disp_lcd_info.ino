@@ -279,7 +279,7 @@ void Object_Avoid_Screen() {  // Radio Information
   lcd.print("/");
   lcd.print(int(avoid_heading));
   lcd.setCursor(0, 2);
-  lcd.print(F("Act/Des Hg:        "));
+  lcd.print(F("Act/Des Hg:         "));
   lcd.setCursor(11, 2);
   lcd.print(car_heading);
   lcd.print("/");

@@ -1,32 +1,20 @@
 // This version is to match the hardware of v10.0 -
 
+
+///////////////////////////////////////////////////////////////////
+//                                                               //
+//                       JAMBOREE DEMO                           //
+//                                                               //
+///////////////////////////////////////////////////////////////////
+
+
 //================== Version Update ===================//
 //
-// 10.0 - HW v 10.0, SW 2.0
+//   RC Control - hold constant angle, avoid stuff in between
+//   This is for Jamboree Demonstration
 //
 //=====================================================//
 
-// Hardware -
-//   - removed 2-cell reading - only read total battery
-//   - added filter for power to GPS
-//   - added filter / caps to main battery voltage divider
-//
-// Software -
-// Changed -
-//   - switched loop to be a switch/case configuration
-//
-// Added -
-//
-// Removed -
-//      - outdated code
-// Future -
-// Changes?-
-//      - New IMU compass
-//      - More accurate gps
-//      - neo pixel styles (error codes)
-//      - buzz error codes
-//      - screen number
-//      - stop_no_gps like stop_no_compass, standardize?
 
 
 //=================  Pin definitions  =================//

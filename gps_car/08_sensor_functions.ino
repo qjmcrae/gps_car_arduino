@@ -67,7 +67,7 @@ float calc_avoidance_angle() {
   if (dist_lidar > 10 || dist_lidar < 3)  // there is nothing in front, so either decay angle, or just do nothing
   {
     // low pass filter - slowly decay it over time.  alpha determined by experiment, but is up for debate
-    float alpha = 0.005;
+    float alpha = 0.008;
     avoid_heading = (1 - alpha) * avoid_heading;
     if (abs(avoid_heading) < 3)  //
     {
