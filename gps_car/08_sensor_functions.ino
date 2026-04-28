@@ -82,7 +82,7 @@ float calc_avoidance_angle() {
   else  // Something is in the way - determine angle to drive around
   {
     set_dir_flag = 1;
-    avoid_heading = avoid_dir * 90 * exp(-0.145 * dist_lidar);  // curve fit reasonable data to find equation
+    avoid_heading = avoid_dir * 90 * exp(-0.3 * dist_lidar);  // curve fit reasonable data to find equation
   }
   return avoid_heading;
 }

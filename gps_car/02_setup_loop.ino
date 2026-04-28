@@ -348,12 +348,12 @@ void loop() {
 
       case STATE_DRIVING:
         if (beeped != 1) beep();  // beep first time it acquires GPS
-        digitalWrite(buzzer_pin,0);
-        brake_time = millis();    // update brake time
+        digitalWrite(buzzer_pin, 0);
+        brake_time = millis();  // update brake time
 
         int kp = 1;  // default to gain of 1 for GPS Car, primarily to set direction if using old test platform...
         // steer_command = constrain(servo_straight - kp * heading_error, servo_left, servo_right);
-        steer_command = constrain(servo_straight + avoid_angle, servo_left, servo_right);
+        steer_command = constrain(servo_straight + avoid_heading, servo_left, servo_right);
         servo_command = steer_command;
 
         if (pid_flag == 0)  // Pick between hard coded and pid - this is open loop / hard-coded
@@ -387,7 +387,7 @@ void loop() {
         static unsigned long beep_off;
         if (now > beep_on) {
           beep_on = now + beep_delay;
-// qj - for this sample          digitalWrite(buzzer_pin, 1);
+          // qj - for this sample          digitalWrite(buzzer_pin, 1);
           beep_off = now + 40;  // the 40 is how long it beeps every time, the "beep_delay" is how long it waits between beeps
         }
         if (now > beep_off) digitalWrite(buzzer_pin, 0);
