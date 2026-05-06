@@ -14,7 +14,8 @@ void get_compass_data(float target_lat, float target_lon) {
     compass_heading = atan2((event.magnetic.y - offsetY) * scaleY, (event.magnetic.x - offsetX) * scaleX) * 180.0 / M_PI;  // - compass_offset;
   } else {
     compass_QMC.read();
-    compass_heading = compass_QMC.getAzimuth();
+    // compass_heading = compass_QMC.getAzimuth();
+    compass_heading = atan2((compass_QMC.getY() - offsetY) * scaleY, (compass_QMC.getX() - offsetX) * scaleX) * 180.0 / M_PI;
   }
   compass_heading = compass_heading - compass_offset;
   gps_heading = atan2(target_lon - gps.location.lng(), target_lat - gps.location.lat()) * 180.0 / M_PI;
@@ -74,16 +75,16 @@ void calibrate_compass() {
   lcd.clear();
   lcd.setCursor(0, 0);
   lcd.print(F("Rotate car all dir."));
-      float xMin = 999;
-      float zMin = 999;
-      float yMin = 999;
-      float yMax = -999;
-      float xMax = -999;
-      float zMax = -999;
+      float xMin = 9999;
+      float zMin = 9999;
+      float yMin = 9999;
+      float yMax = -9999;
+      float xMax = -9999;
+      float zMax = -9999;
+      unsigned long start_time = millis();
 
     if (hmc_flag)  //
     {
-      unsigned long start_time = millis();
       lcd.setCursor(0, 1);
       lcd.print(F("HMC"));
 
@@ -131,24 +132,51 @@ void calibrate_compass() {
       lcd.setCursor(0, 1);
       lcd.print(F("QMC"));
 
+      while (millis() - start_time < 20000) {
+        compass_QMC.read();
+        
+        if (compass_QMC.getX() < xMin) xMin = compass_QMC.getX();
+        if (compass_QMC.getX() > xMax) xMax = compass_QMC.getX();
+        if (compass_QMC.getY() < yMin) yMin = compass_QMC.getY();
+        if (compass_QMC.getY() > yMax) yMax = compass_QMC.getY();
+        if (compass_QMC.getZ() < zMin) zMin = compass_QMC.getZ();
+        if (compass_QMC.getZ() > zMax) zMax = compass_QMC.getZ();
+
+        delay(10);
+      }
+
+      
+      // offset calculation
+      offsetX = (xMax + xMin) / 2;
+      offsetY = (yMax + yMin) / 2;
+      offsetZ = (zMax + zMin) / 2;
+
+      // Scales calculation
+      float DeltaX = (xMax - xMin) / 2;
+      float DeltaY = (yMax - yMin) / 2;
+      float DeltaZ = (zMax - zMin) / 2;
+
+      float AverageDelta = (DeltaX + DeltaY + DeltaZ) / 3;
+      scaleX = AverageDelta / DeltaX;
+      scaleY = AverageDelta / DeltaY;
+      scaleZ = AverageDelta / DeltaZ;
+
       // This function does the same thing as the above statement
-      compass_QMC.calibrate();
+      // compass_QMC.calibrate();
 
-      // offsetX = (xMax + xMin) / 2;
-      // offsetY = (yMax + yMin) / 2;
-      // offsetZ = (zMax + zMin) / 2;
+      // offsetX = compass_QMC.getCalibrationOffset(0);
+      // offsetY = compass_QMC.getCalibrationOffset(1);
+      // offsetZ = compass_QMC.getCalibrationOffset(2);
+      // scaleX = compass_QMC.getCalibrationScale(0);
+      // scaleY = compass_QMC.getCalibrationScale(1);
+      // scaleZ = compass_QMC.getCalibrationScale(2);
 
-      offsetX = compass_QMC.getCalibrationOffset(0);
-      offsetY = compass_QMC.getCalibrationOffset(1);
-      offsetZ = compass_QMC.getCalibrationOffset(2);
-      scaleX = compass_QMC.getCalibrationScale(0);
-      scaleY = compass_QMC.getCalibrationScale(1);
-      scaleZ = compass_QMC.getCalibrationScale(2);
+
 
       char finalBuffer[32];
       char scalesBuffer[32];
 
-      snprintf(finalBuffer, sizeof(finalBuffer), "%.2f:%.2f%.2f", offsetX, offsetY, offsetZ);
+      snprintf(finalBuffer, sizeof(finalBuffer), "%.2f:%.2f:%.2f", offsetX, offsetY, offsetZ);
       snprintf(scalesBuffer, sizeof(scalesBuffer), "%.2f:%.2f:%.2f", scaleX, scaleY, scaleZ);
         // writing the data that we just got
       FS_writeData(compass_calibration, finalBuffer, strlen(finalBuffer));
@@ -198,10 +226,10 @@ void retrieve_Compass_Data() {
     }
   }
 
-  // QMC compass is newer and uses a class to hide this data. Not a big deal to just set it when we call it.
-  if (!hmc_flag) {
-    compass_QMC.setCalibrationScales(scaleX, scaleY, scaleZ);
-    compass_QMC.setCalibrationOffsets(offsetX, offsetY, offsetZ);
-  }
+  // // QMC compass is newer and uses a class to hide this data. Not a big deal to just set it when we call it.
+  // if (!hmc_flag) {
+  //   compass_QMC.setCalibrationScales(scaleX, scaleY, scaleZ);
+  //   compass_QMC.setCalibrationOffsets(offsetX, offsetY, offsetZ);
+  // }
 
 }
