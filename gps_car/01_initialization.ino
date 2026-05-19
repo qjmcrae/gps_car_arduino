@@ -193,9 +193,15 @@ Car_state currentState;
 //============== Compass offsets and FS imports =========//
 // -C
 //=======================================================//
+// // offsets help recenter your measurement point
 float offsetX = 0.0;
 float offsetY = 0.0;
 float offsetZ = 0.0;
+// Scales help to transform a stretched circle to a normal circle
+// They multiply, so they should be 1.0 to have no effect
+float scaleX = 1.0;
+float scaleY = 1.0;
+float scaleZ = 1.0;
 // Imports for littleFS as well as definitions.
 #include <LittleFS_Mbed_RP2040.h> // File System for storing data like Compass calibration.
 #define LFS_MBED_RP2040_VERSION_MIN_TARGET      "LittleFS_Mbed_RP2040 v1.1.0"
@@ -206,6 +212,7 @@ float offsetZ = 0.0;
 bool FS_init = false;
 LittleFS_MBED *myFS;
 char compass_calibration[] = MBED_LITTLEFS_FILE_PREFIX "/compass.txt";
+char compass_scales[] = MBED_LITTLEFS_FILE_PREFIX "/compass_scales.txt";
 //=============== Initialize Libraries ================//
 // Include Libraries, Setup objects, modules, etc.
 //=====================================================//
