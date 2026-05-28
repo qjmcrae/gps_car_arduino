@@ -75,113 +75,113 @@ void calibrate_compass() {
   lcd.clear();
   lcd.setCursor(0, 0);
   lcd.print(F("Rotate car all dir."));
-      float xMin = 9999;
-      float zMin = 9999;
-      float yMin = 9999;
-      float yMax = -9999;
-      float xMax = -9999;
-      float zMax = -9999;
-      unsigned long start_time = millis();
+  float xMin = 999;
+  float zMin = 999;
+  float yMin = 999;
+  float yMax = -999;
+  float xMax = -999;
+  float zMax = -999;
+  unsigned long start_time = millis();
 
-    if (hmc_flag)  //
-    {
-      lcd.setCursor(0, 1);
-      lcd.print(F("HMC"));
-
-
-      while (millis() - start_time < 20000) { // Spin car for 20 seconds so we can get the highest and lowest values
-        sensors_event_t event;
-        compass_HMC.getEvent(&event);
-
-        if (event.magnetic.x < xMin) xMin = event.magnetic.x;
-        if (event.magnetic.x > xMax) xMax = event.magnetic.x;
-        if (event.magnetic.y < yMin) yMin = event.magnetic.y;
-        if (event.magnetic.y > yMax) yMax = event.magnetic.y;
-        if (event.magnetic.z < zMin) zMin = event.magnetic.z;
-        if (event.magnetic.z > zMax) zMax = event.magnetic.z;
+  if (hmc_flag)  //
+  {
+    lcd.setCursor(0, 1);
+    lcd.print(F("HMC"));
 
 
-        delay(10);
-      }
-      // Offset calculation
-      offsetX = (xMax + xMin) / 2;
-      offsetY = (yMax + yMin) / 2;
-      offsetZ = (zMax + zMin) / 2;
+    while (millis() - start_time < 20000) {  // Spin car for 20 seconds so we can get the highest and lowest values
+      sensors_event_t event;
+      compass_HMC.getEvent(&event);
 
-      // Scales calculation
-      float DeltaX = (xMax - xMin) / 2;
-      float DeltaY = (yMax - yMin) / 2;
-      float DeltaZ = (zMax - zMin) / 2;
+      if (event.magnetic.x < xMin) xMin = event.magnetic.x;
+      if (event.magnetic.x > xMax) xMax = event.magnetic.x;
+      if (event.magnetic.y < yMin) yMin = event.magnetic.y;
+      if (event.magnetic.y > yMax) yMax = event.magnetic.y;
+      if (event.magnetic.z < zMin) zMin = event.magnetic.z;
+      if (event.magnetic.z > zMax) zMax = event.magnetic.z;
 
-      float AverageDelta = (DeltaX + DeltaY + DeltaZ) / 3;
-      scaleX = AverageDelta / DeltaX;
-      scaleY = AverageDelta / DeltaY;
-      scaleZ = AverageDelta / DeltaZ;
 
-      char finalBuffer[32];
-      char scalesBuffer[32];
+      delay(10);
+    }
+    // Offset calculation
+    offsetX = (xMax + xMin) / 2;
+    offsetY = (yMax + yMin) / 2;
+    offsetZ = (zMax + zMin) / 2;
+
+    // // Scales calculation
+    // float DeltaX = (xMax - xMin) / 2;
+    // float DeltaY = (yMax - yMin) / 2;
+    // float DeltaZ = (zMax - zMin) / 2;
+
+    // float AverageDelta = (DeltaX + DeltaY + DeltaZ) / 3;
+    // scaleX = AverageDelta / DeltaX;
+    // scaleY = AverageDelta / DeltaY;
+    // scaleZ = AverageDelta / DeltaZ;
+
+    char finalBuffer[32];
+    char scalesBuffer[32];
 
     snprintf(finalBuffer, sizeof(finalBuffer), "%.2f:%.2f:%.2f", offsetX, offsetY, offsetZ);
     snprintf(scalesBuffer, sizeof(scalesBuffer), "%.2f:%.2f:%.2f", scaleX, scaleY, scaleZ);
-      // writing the data that we just got
+    // writing the data that we just got
     FS_writeData(compass_calibration, finalBuffer, strlen(finalBuffer));
     FS_writeData(compass_scales, scalesBuffer, strlen(scalesBuffer));
-      }     //
-    else  //
-    {
-      lcd.setCursor(0, 1);
-      lcd.print(F("QMC"));
+  }     //
+  else  //
+  {
+    lcd.setCursor(0, 1);
+    lcd.print(F("QMC"));
 
-      while (millis() - start_time < 20000) {
-        compass_QMC.read();
-        
-        if (compass_QMC.getX() < xMin) xMin = compass_QMC.getX();
-        if (compass_QMC.getX() > xMax) xMax = compass_QMC.getX();
-        if (compass_QMC.getY() < yMin) yMin = compass_QMC.getY();
-        if (compass_QMC.getY() > yMax) yMax = compass_QMC.getY();
-        if (compass_QMC.getZ() < zMin) zMin = compass_QMC.getZ();
-        if (compass_QMC.getZ() > zMax) zMax = compass_QMC.getZ();
+    while (millis() - start_time < 20000) {
+      compass_QMC.read();
 
-        delay(10);
-      }
+      if (compass_QMC.getX() < xMin) xMin = compass_QMC.getX();
+      if (compass_QMC.getX() > xMax) xMax = compass_QMC.getX();
+      if (compass_QMC.getY() < yMin) yMin = compass_QMC.getY();
+      if (compass_QMC.getY() > yMax) yMax = compass_QMC.getY();
+      if (compass_QMC.getZ() < zMin) zMin = compass_QMC.getZ();
+      if (compass_QMC.getZ() > zMax) zMax = compass_QMC.getZ();
 
-      
-      // offset calculation
-      offsetX = (xMax + xMin) / 2;
-      offsetY = (yMax + yMin) / 2;
-      offsetZ = (zMax + zMin) / 2;
-
-      // Scales calculation
-      float DeltaX = (xMax - xMin) / 2;
-      float DeltaY = (yMax - yMin) / 2;
-      float DeltaZ = (zMax - zMin) / 2;
-
-      float AverageDelta = (DeltaX + DeltaY + DeltaZ) / 3;
-      scaleX = AverageDelta / DeltaX;
-      scaleY = AverageDelta / DeltaY;
-      scaleZ = AverageDelta / DeltaZ;
-
-      // This function does the same thing as the above statement
-      // compass_QMC.calibrate();
-
-      // offsetX = compass_QMC.getCalibrationOffset(0);
-      // offsetY = compass_QMC.getCalibrationOffset(1);
-      // offsetZ = compass_QMC.getCalibrationOffset(2);
-      // scaleX = compass_QMC.getCalibrationScale(0);
-      // scaleY = compass_QMC.getCalibrationScale(1);
-      // scaleZ = compass_QMC.getCalibrationScale(2);
-
-
-
-      char finalBuffer[32];
-      char scalesBuffer[32];
-
-      snprintf(finalBuffer, sizeof(finalBuffer), "%.2f:%.2f:%.2f", offsetX, offsetY, offsetZ);
-      snprintf(scalesBuffer, sizeof(scalesBuffer), "%.2f:%.2f:%.2f", scaleX, scaleY, scaleZ);
-        // writing the data that we just got
-      FS_writeData(compass_calibration, finalBuffer, strlen(finalBuffer));
-      FS_writeData(compass_scales, scalesBuffer, strlen(scalesBuffer));
+      delay(10);
     }
+
+
+    // offset calculation
+    offsetX = (xMax + xMin) / 2;
+    offsetY = (yMax + yMin) / 2;
+    offsetZ = (zMax + zMin) / 2;
+
+    // // Scales calculation
+    // float DeltaX = (xMax - xMin) / 2;
+    // float DeltaY = (yMax - yMin) / 2;
+    // float DeltaZ = (zMax - zMin) / 2;
+
+    // float AverageDelta = (DeltaX + DeltaY + DeltaZ) / 3;
+    // scaleX = AverageDelta / DeltaX;
+    // scaleY = AverageDelta / DeltaY;
+    // scaleZ = AverageDelta / DeltaZ;
+
+    // This function does the same thing as the above statement
+    // compass_QMC.calibrate();
+
+    // offsetX = compass_QMC.getCalibrationOffset(0);
+    // offsetY = compass_QMC.getCalibrationOffset(1);
+    // offsetZ = compass_QMC.getCalibrationOffset(2);
+    // scaleX = compass_QMC.getCalibrationScale(0);
+    // scaleY = compass_QMC.getCalibrationScale(1);
+    // scaleZ = compass_QMC.getCalibrationScale(2);
+
+
+
+    char finalBuffer[32];
+    char scalesBuffer[32];
+
+    snprintf(finalBuffer, sizeof(finalBuffer), "%.2f:%.2f:%.2f", offsetX, offsetY, offsetZ);
+    snprintf(scalesBuffer, sizeof(scalesBuffer), "%.2f:%.2f:%.2f", scaleX, scaleY, scaleZ);
+    // writing the data that we just got
+    FS_writeData(compass_calibration, finalBuffer, strlen(finalBuffer));
+    FS_writeData(compass_scales, scalesBuffer, strlen(scalesBuffer));
+  }
 }
 
 // ************************   RETRIEVE_COMPASS_DATA   ************************//
@@ -207,7 +207,6 @@ void retrieve_Compass_Data() {
     } else {
       Serial.println("data incorrect format");
     }
-
   }
 
   // Recieving scales
@@ -217,7 +216,7 @@ void retrieve_Compass_Data() {
     char* yScale = strtok(NULL, ":");
     char* zScale = strtok(NULL, ":");
 
-    if(xScale != NULL && yScale != NULL && zScale != NULL) {
+    if (xScale != NULL && yScale != NULL && zScale != NULL) {
       scaleX = atof(xScale);
       scaleY = atof(yScale);
       scaleZ = atof(zScale);
@@ -231,5 +230,4 @@ void retrieve_Compass_Data() {
   //   compass_QMC.setCalibrationScales(scaleX, scaleY, scaleZ);
   //   compass_QMC.setCalibrationOffsets(offsetX, offsetY, offsetZ);
   // }
-
 }

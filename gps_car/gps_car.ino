@@ -26,6 +26,11 @@ byte neo_blue = 50;
 // const float target_lats[num_gps_tgts]  = {  40.673279,   40.673511,   40.673320,   40.673442,   40.673226,   40.673531,   40.673279};
 // const float target_longs[num_gps_tgts] = {-111.939704, -111.939532, -111.939333, -111.940018, -111.939857, -111.939755, -111.939704};
 
+const char course_name[] = "    Day 1 Demo      ";
+const byte num_gps_tgts = 7;
+const float target_lats[num_gps_tgts]  = {  40.671750,   40.671633,   40.671553,   40.671552,   40.671633,   40.671747,   40.671750};
+const float target_longs[num_gps_tgts] = {-111.944582, -111.944437, -111.944568, -111.944312, -111.944437, -111.944273, -111.944582};
+
 // const char course_name[] = "    SI Test      ";
 // const byte num_gps_tgts = 4;   // make sure to update this!
 // const float target_lats[num_gps_tgts]  = {40.671524, 40.671457,  40.671618, 40.671524 };
@@ -41,10 +46,10 @@ byte neo_blue = 50;
 // const float target_lats[num_gps_tgts]  = {40.671732,      40.671564,   40.671732,     40.671564,   40.671732,     40.671564,    40.671732};
 // const float target_longs[num_gps_tgts] = {-111.944580,  -111.944623,  -111.944580,  -111.944623,  -111.944580,  -111.944623,  -111.944580};
 
-const char course_name[] = " RC Avoidance Test  ";
-const byte num_gps_tgts = 13;   // make sure to update this!
-const float target_lats[num_gps_tgts]  = {  40.671505,   40.671757,   40.671505,   40.671757,   40.671505,   40.671757,   40.671505,   40.671757,   40.671505,   40.671757,   40.671505,   40.671757,   40.671505};
-const float target_longs[num_gps_tgts] = {-111.944992, -111.944987, -111.944992, -111.944987, -111.944992, -111.944987, -111.944992, -111.944987, -111.944992, -111.944987, -111.944992, -111.944987, -111.944992};
+// const char course_name[] = " RC Avoidance Test  ";
+// const byte num_gps_tgts = 13;   // make sure to update this!
+// const float target_lats[num_gps_tgts]  = {  40.671505,   40.671757,   40.671505,   40.671757,   40.671505,   40.671757,   40.671505,   40.671757,   40.671505,   40.671757,   40.671505,   40.671757,   40.671505};
+// const float target_longs[num_gps_tgts] = {-111.944992, -111.944987, -111.944992, -111.944987, -111.944992, -111.944987, -111.944992, -111.944987, -111.944992, -111.944987, -111.944992, -111.944987, -111.944992};
 
 
 
